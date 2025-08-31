@@ -3,10 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useHomeState } from "@/store/store.homeStates";
 import React, { useState } from "react";
+import { z } from "zod"; // import correctly
+
+// email schema
+const emailValidator = z.object({
+  email: z.email({
+    error:"Invalid email address"
+  }),
+});
 
 export default function HomeComponent() {
   const [emailValue, setEmailValue] = useState<string>("");
-  const {setState}=useHomeState()
+  const [errorEmail, setErrorEmail] = useState<string>("");
+  const { setState } = useHomeState();
+
+  function handleGetStart() {
+    const result = emailValidator.safeParse({ email: emailValue });
+
+    if (result.success) {
+      setErrorEmail("");
+      setState("OTP");
+    } else {
+      setErrorEmail(result.error.issues[0].message || "Invalid email");
+    }
+  }
+
   return (
     <div className="bg-[#F2F7F6] min-h-[80vh] p-10 flex justify-center items-center">
       <div className="max-w-xl space-y-3">
@@ -14,26 +35,34 @@ export default function HomeComponent() {
           Create & Share <span className="px-2 bg-[#CCFB87] ">Quizzes</span> in
           Seconds
         </div>
-        <div className="text-md text-[#002F25] font-medium text-center ">
+
+        <div className="text-md text-[#002F25] font-medium text-center">
           Create quizzes in seconds, share with anyone, anywhere. Fun, fast, and
           simple – no sign-up or coding needed. Engage your friends, students,
           or team with instant results.
         </div>
+
         <div className="flex flex-row justify-center w-full">
-          <div className="flex flex-row min-w-sm">
+          <div className="flex flex-row max-w-md w-full">
             <Input
-              placeholder="Enter Your Mail Address"
-              className="bg-[#FFFFFF] rounded-l-3xl rounded-r-none pb-1 pl-3"
+              placeholder="Enter Your Email Address"
+              className="bg-white rounded-l-3xl rounded-r-none pl-3"
               value={emailValue}
               onChange={(e) => setEmailValue(e.target.value)}
             />
             <Button
-            onClick={()=>{setState('OTP')}}
-            className="hover:bg-[#CCFB87] cursor-pointer hover:text-[#002F25] bg-[#CCFB87] text-[#002F25] rounded-r-3xl rounded-l-none">
+              onClick={handleGetStart}
+              className="hover:bg-[#bbf56d] cursor-pointer hover:text-[#002F25] bg-[#CCFB87] text-[#002F25] rounded-r-3xl rounded-l-none"
+            >
               Get Started
             </Button>
           </div>
         </div>
+
+        {/* show error if exists */}
+        {errorEmail && (
+          <p className="text-red-600 text-sm text-center">{errorEmail}</p>
+        )}
       </div>
     </div>
   );

@@ -2,13 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useHomeState } from "@/store/store.homeStates";
 import { useRouter } from "next/navigation";
 
 export default function OTPComponent() {
+  const router = useRouter();
   const [otp, setOtp] = useState(Array(6).fill(""));
-  const {setState}= useHomeState()
-  const router=useRouter()
 
   const handleChange = (value: string, index: number) => {
     if (/^[0-9]?$/.test(value)) {
@@ -19,7 +17,7 @@ export default function OTPComponent() {
   };
 
   const handleVerify = () => {
-    router.push("/questions")
+    router.push("/questions");
   };
 
   return (
