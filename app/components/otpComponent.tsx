@@ -3,9 +3,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { useHomeState } from "@/store/store.homeStates";
 
 export default function OTPComponent() {
   const router = useRouter();
+  const {otp:storeOtp} =useHomeState()
   const [otp, setOtp] = useState(Array(6).fill(""));
 
   const handleChange = (value: string, index: number) => {
@@ -17,7 +19,10 @@ export default function OTPComponent() {
   };
 
   const handleVerify = () => {
-    router.push("/questions");
+    const enteredOtp = otp.join("");
+    if (storeOtp?.toString() === enteredOtp) {
+      router.push("/questions");
+    }
   };
 
   return (
