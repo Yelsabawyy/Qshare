@@ -16,7 +16,7 @@ export default function HomeComponent() {
   const [emailValue, setEmailValue] = useState<string>("");
   const [errorEmail, setErrorEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const {setOtp,setState} = useHomeState()
+  const {setOtp,setState,setStoredEmail} = useHomeState()
   async function handleGetStart() {
     const result = emailValidator.safeParse({ email: emailValue });
 
@@ -37,6 +37,7 @@ export default function HomeComponent() {
           throw new Error(data.message);
         }
         setOtp(data.otp)
+        setStoredEmail(emailValue)
         setState('OTP')
       } catch (error) {
         const errorMessage =

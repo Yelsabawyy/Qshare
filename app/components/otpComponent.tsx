@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useHomeState } from "@/store/store.homeStates";
+import { setCookie } from "@/utils/cookies";
 
 export default function OTPComponent() {
   const router = useRouter();
-  const {otp:storeOtp} =useHomeState()
+  const { otp: storeOtp, storedEmail } = useHomeState();
   const [otp, setOtp] = useState(Array(6).fill(""));
-
+  const [loading, setLoading] = useState<boolean>(false);
   const handleChange = (value: string, index: number) => {
     if (/^[0-9]?$/.test(value)) {
       const newOtp = [...otp];
@@ -19,9 +20,22 @@ export default function OTPComponent() {
   };
 
   const handleVerify = () => {
+    setLoading(true);
+
     const enteredOtp = otp.join("");
+    console.log( storedEmail)
+    console.log( enteredOtp)
+    console.log(storeOtp?.toString())
+    console.log(storeOtp?.toString() === enteredOtp)
     if (storeOtp?.toString() === enteredOtp) {
+      if (storedEmail) {
+        setCookie("email", storedEmail);
+      }
+      // don’t reset loading here — let router handle redirect
       router.push("/questions");
+    } else {
+      // only reset if OTP is wrong
+      setLoading(false);
     }
   };
 
@@ -46,10 +60,11 @@ export default function OTPComponent() {
 
         <div className="space-y-3">
           <Button
+            disabled={loading}
             onClick={handleVerify}
             className="bg-[#002F25] hover:bg-[#002F25] cursor-pointer text-white w-full rounded-3xl hover:brightness-95"
           >
-            Verify
+            {loading ? "Loading..." : "Verify"}
           </Button>
         </div>
       </div>
