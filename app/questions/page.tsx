@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getCookie } from "@/utils/cookies";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const QuestionItem = z.object({
   question: z.string().min(1, "Question is required"),
@@ -20,7 +21,18 @@ type FormValues = z.infer<typeof FormSchema>;
 // 2) Component
 export default function QuestionsForm() {
   const [loadingComponent, setLoadingComponent] = useState(true);
+  const [quizUrl, setQuizUrl] = useState<string>("");
+    const [copied, setCopied] = useState(false);
+
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(quizUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // reset after 2s
+  };
 
   useEffect(() => {
     if (!getCookie("email")) {
@@ -34,6 +46,7 @@ export default function QuestionsForm() {
     register,
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
@@ -45,9 +58,27 @@ export default function QuestionsForm() {
     name: "questions",
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Submitted questions:", data.questions);
-    // send to backend or state manager
+  const onSubmit = async (data: FormValues) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/create-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questions: data.questions.map((q) => q.question),
+          creatorEmail: getCookie("email"), // from cookie
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to save quiz");
+      reset();
+      setQuizUrl(result.url);
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return loadingComponent ? (
@@ -61,6 +92,22 @@ export default function QuestionsForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-4 max-w-2xl mx-auto px-5 min-h-[80vh]"
     >
+      {quizUrl && <div className="flex items-center gap-2 p-4 rounded-none bg-white max-w-md mx-auto">
+        <input
+          type="text"
+          readOnly
+          value={quizUrl}
+          className="flex-1 px-3 py-2 border  text-gray-700 focus:outline-none"
+        />
+        <Button
+          onClick={handleCopy}
+          type="button"
+          className="bg-[#002F25] cursor-pointer text-white hover:brightness-90 px-4 py-2 rounded-md"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </Button>
+      </div>}
+
       <label className="block text-sm font-medium text-gray-700">
         Questions
       </label>
@@ -127,9 +174,10 @@ export default function QuestionsForm() {
 
         <button
           type="submit"
-          className="px-4 py-2 rounded-none cursor-pointer bg-[#002F25] text-white font-medium"
+          disabled={loading}
+          className="px-4 py-2 rounded-none cursor-pointer disabled:bg-[#002f256e] bg-[#002F25] text-white font-medium"
         >
-          Save
+          {loading ? "Loading..." : "Save"}
         </button>
       </div>
     </form>
