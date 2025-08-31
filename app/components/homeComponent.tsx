@@ -8,21 +8,45 @@ import { z } from "zod"; // import correctly
 // email schema
 const emailValidator = z.object({
   email: z.email({
-    error:"Invalid email address"
+    error: "Invalid email address",
   }),
 });
 
 export default function HomeComponent() {
   const [emailValue, setEmailValue] = useState<string>("");
   const [errorEmail, setErrorEmail] = useState<string>("");
-  const { setState } = useHomeState();
-
-  function handleGetStart() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const {setOtp,setState} = useHomeState()
+  async function handleGetStart() {
     const result = emailValidator.safeParse({ email: emailValue });
 
     if (result.success) {
-      setErrorEmail("");
-      setState("OTP");
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/send-otp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: emailValue,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message);
+        }
+        setOtp(data.otp)
+        setState('OTP')
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Error occurred, please try again!";
+        setErrorEmail(errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setErrorEmail(result.error.issues[0].message || "Invalid email");
     }
@@ -52,9 +76,10 @@ export default function HomeComponent() {
             />
             <Button
               onClick={handleGetStart}
+              disabled={isLoading}
               className="hover:bg-[#bbf56d] cursor-pointer hover:text-[#002F25] bg-[#CCFB87] text-[#002F25] rounded-r-3xl rounded-l-none"
             >
-              Get Started
+              {isLoading?"Loading...":"Get Started"}
             </Button>
           </div>
         </div>
