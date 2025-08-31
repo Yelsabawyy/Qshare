@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 interface HomeState {
-  states: "HOME"| "OTP" | "QUESTIONS";
-  setState: (state: "HOME"| "OTP" | "QUESTIONS") => void;
+  states: "HOME"| "OTP";
+  setState: (state: "HOME"| "OTP") => void;
 }
 
 export const useHomeState = create<HomeState>((set) => ({

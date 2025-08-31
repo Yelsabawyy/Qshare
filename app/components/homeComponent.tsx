@@ -1,10 +1,12 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useHomeState } from "@/store/store.homeStates";
 import React, { useState } from "react";
 
 export default function HomeComponent() {
   const [emailValue, setEmailValue] = useState<string>("");
+  const {setState}=useHomeState()
   return (
     <div className="bg-[#F2F7F6] min-h-[80vh] p-10 flex justify-center items-center">
       <div className="max-w-xl space-y-3">
@@ -25,7 +27,9 @@ export default function HomeComponent() {
               value={emailValue}
               onChange={(e) => setEmailValue(e.target.value)}
             />
-            <Button className="hover:bg-[#CCFB87] cursor-pointer hover:text-[#002F25] bg-[#CCFB87] text-[#002F25] rounded-r-3xl rounded-l-none">
+            <Button
+            onClick={()=>{setState('OTP')}}
+            className="hover:bg-[#CCFB87] cursor-pointer hover:text-[#002F25] bg-[#CCFB87] text-[#002F25] rounded-r-3xl rounded-l-none">
               Get Started
             </Button>
           </div>
