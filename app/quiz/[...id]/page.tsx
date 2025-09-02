@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface QuizPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>; // For [id] single dynamic routes
 }
 
 interface QuizType {
@@ -13,20 +13,27 @@ interface QuizType {
 }
 
 export default function Page({ params }: QuizPageProps) {
-  const { id } = params;
-
   const [quiz, setQuiz] = useState<QuizType | null>(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string>(""); // <-- New state
+  const [userEmail, setUserEmail] = useState<string>("");
 
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        const response = await fetch(`/api/quiz/${id}`);
+        // Await the params promise
+        const { id } = await params;
+
+        const response = await fetch("/api/quiz", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id }),
+        });
         if (response.status === 404) {
           setError("Quiz not found");
           return;
@@ -45,7 +52,7 @@ export default function Page({ params }: QuizPageProps) {
     };
 
     fetchQuiz();
-  }, [id]);
+  }, [params]);
 
   const handleAnswerChange = (index: number, value: string) => {
     const newAnswers = [...answers];
@@ -61,7 +68,7 @@ export default function Page({ params }: QuizPageProps) {
       const response = await fetch(`/api/quiz/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quiz, answers, userEmail }), // <-- include userEmail
+        body: JSON.stringify({ quiz, answers, userEmail }),
       });
 
       if (response.ok) {
@@ -86,7 +93,7 @@ export default function Page({ params }: QuizPageProps) {
 
   if (error)
     return (
-      <div className="min-h-[70vh] flex items-center justify-center text-red-600 font-bold">
+      <div className="min-h-[70vh] flex items-center justify-center text-gray-700 font-semibold">
         {error}
       </div>
     );
@@ -106,11 +113,10 @@ export default function Page({ params }: QuizPageProps) {
   return (
     <div className="max-w-2xl mx-auto px-5 py-10 space-y-6">
       <h1 className="text-3xl font-bold text-[#002F25] text-center">
-        Quiz ID: {quiz!._id}
+        Quiz ID: {quiz?._id}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email input for the person taking the quiz */}
         <div className="p-4 bg-white">
           <label
             htmlFor="userEmail"
@@ -129,7 +135,7 @@ export default function Page({ params }: QuizPageProps) {
           />
         </div>
 
-        {quiz!.questions.map((question, index) => (
+        {quiz?.questions.map((question, index) => (
           <div key={index} className="p-4 bg-white">
             <label
               htmlFor={`question-${index}`}
